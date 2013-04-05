@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<script language="JavaScript">
+<!--
+//redesign by Leask
+var dshowW=450; //默认预览图宽度(可由小图的showW,showH动态指定)
+var dshowH=300; //默认预览图高度
+var bborder=1; //大图边框
+var sborder=1; //小图边框
+var vborder=1; //小预览图边框
+var bigW,bigH,smallW,smallH,showW,showH,viewW,viewH;//大图,小图,预览窗,小预览窗
+var nview,nflag,picstatus,tempo,abox,zoomX,zoomY;
+//初始化
+window.onload=function init(){
+	isIE=window.event?1:0;
+	picshow.style.borderWidth=bborder;
+	picshow.style.width=dshowW;
+	picshow.style.height=dshowH;
+	bpic.style.display="";
+	abox=document.body.getElementsByTagName("div"); //初始化所有小图
+	for (n=0;n<abox.length;n++)
+		if (abox[n].className=="picbox"){
+			var o=abox[n];
+			var view=getview(o);
+			var img=getimg(o);
+			view.style.borderWidth=vborder;
+			o.style.borderWidth=sborder;
+			o.style.width=img.width+sborder*2*isIE;
+			o.style.height=img.height+sborder*2*isIE;
+			o.setAttribute("pid",n); //小图标记,主键唯一
+			if (o.getAttribute("show")=="show") loadpic(o);
+			o.onmouseout=function (){nview.style.visibility="hidden";}
+		}
+}
+//载入图片
+function loadpic(o){ 
+	var view=getview(o);
+	var img=getimg(o);
+	bpic.style.display="none";
+	nview=view; //标记活动小预览窗
+	nflag=o.getAttribute("pid"); //当前图片标记,用来判断切换图片
+	//改变预览窗大小
+	if (img.getAttribute("showW")!=null) showW=parseInt(img.getAttribute("showW"));
+	else showW=dshowW;
+	if (img.getAttribute("showH")!=null) showH=parseInt(img.getAttribute("showH"));
+	else showH=dshowH;
+	picshow.style.width=showW+isIE*bborder*2;
+	picshow.style.height=showH+isIE*bborder*2;
+	loading.style.marginTop=(showH-loading.offsetHeight)/2;
+	if (img.getAttribute("dLeft")) bpic.style.marginLeft=-parseInt(img.getAttribute("dLeft"));
+	if (img.getAttribute("dTop")) bpic.style.marginTop=-parseInt(img.getAttribute("dTop"));
+	picstatus="loading";
+	tempo=o;
+	bpic.src=img.lowsrc;
+}
+//图片载入完成
+function loaddone(o){
+	bpic.style.display="block";
+	var view=getview(o);
+	var img=getimg(o);
+	smallW=img.width; //改变小图,小预览窗大小
+	smallH=img.height;
+	bigW=bpic.width;
+	bigH=bpic.height;
+	if (showW>bigW){//如果预览图比大图大,则等于大图
+		showW=bigW;
+		picshow.style.width=showW+isIE*bborder*2;
+	}
+	if (showH>bigH){
+		showH=bigH;
+		picshow.style.height=showH+isIE*bborder*2;
+	}
+	zoomX=bigW/smallW;
+	zoomY=bigH/smallH;
+	viewW=showW*smallW/bigW;
+	viewH=showH*smallH/bigH;
+	nview.style.width=viewW-vborder*2*!isIE;
+	nview.style.height=viewH-vborder*2*!isIE;
+	nview.style.display="block"; 
+	img.style.top=-nview.offsetHeight;
+	if (!nview.style.left) nview.style.left=0;
+	if (!nview.style.top) nview.style.top=0;
+	picstatus="done"
+}
+//移动事件
+function move(e,o,flag){ //flag,对象来源标记,FF下view的定位需要
+	o=isIE?o.parentElement:o.parentNode;
+	if (o.getAttribute("pid")!=nflag){ //判断是否切换了图片
+		nview.style.visibility="hidden"; 
+		loadpic(o); //载入新图片
+	}
+	if (picstatus="done"){ //如果大图载入完毕
+		if (nview.style.visibility="hidden") nview.style.visibility="visible";
+		var e=isIE?window.event:e;
+		if (isIE==0){ //分别获取FF或IE的view位置
+			if (flag==1){ //由于o的来源不同,使用不同的算法定位
+				vX=e.layerX+parseInt(nview.style.left)-nview.offsetWidth/2-vborder;
+				vY=e.layerY+parseInt(nview.style.top)-nview.offsetHeight/2-vborder;
+			}else{
+				vX=e.layerX-nview.offsetWidth/2-vborder;
+				vY=e.layerY-nview.offsetHeight/2-vborder;
+			}
+		}
+		else{
+			vX=e.offsetX-nview.offsetWidth/2;
+			vY=e.offsetY-nview.offsetHeight/2;
+		} 
+		if (vX < 0) vX = 0; //边界判断,不能超出缩略图的范围
+		if (vY < 0) vY = 0;
+		if (vX > smallW-viewW) {vX=smallW-viewW;mX=bigW-showW}else{mX=vX * zoomX;}
+		if (vY > smallH-viewH) {vY=smallH-viewH;mY=bigH-showH}else{mY=vY * zoomY;}
+		nview.style.left=vX;
+		nview.style.top=vY;
+		bpic.style.marginLeft = - mX; //刷新预览窗口
+		bpic.style.marginTop = - mY;
+	}
+}
+//得到view
+function getview(o){
+	var arr=o.getElementsByTagName("div");
+	var n;
+	for (n=0;n<arr.length;n++)
+		if (arr[n].className="view") return arr[n];
+}
+//得到img
+function getimg(o){
+	var arr=o.getElementsByTagName("img");
+	var n;
+	for (n=0;n<arr.length;n++)
+		if (arr[n].className="spic") return arr[n];
+}
+//-->
+</script>
+<style type="text/css">
+<!--
+*{padding:0;margin:0}
+body{color:white;background:black;font:bold 12px/18px tahoma;color:white;}
+#picshow{border:1px red solid;width:200;height:150;overflow:hidden;margin:0 auto}/*width,height随便定义,为了第一次显示时能看见loading*/
+#bpic{display:none}
+#loading{font:bold 22px/30px tahoma;color:white;}
+#loading img{vertical-align:middle;position:relative}
+#loading .text{font:bold 12px/20px tahoma;color:white;}
+.picbox{border:1px green dashed;overflow:hidden;float:left;width:0;height:0;text-align:left}/*注意:overflow:hidden;text-align:left不可更改,如果在IE的表格中定位会出问题*/
+.spic{position:relative;}/*position:relative不可更改*/
+.view{border:1px silver solid;z-index:100;font-size:1px;position:relative;visibility:hidden;display:none}/*position:relative;visibility:hidden;display:none不可更改*/
+td{text-align:center;height:60px;font-size:30px;margin:0 auto}
+//-->
+</style>
+</head>
+
+<body>
+Some text here...<br>ok.| 您需要做的仅仅是加入picshow块和picbox块,设置必要参数,剩下的就让JS去做吧! (移到小图上看更多说明)
+<table cellpadding="0" cellspacing="0" border="2" width="100%">
+<tr>
+	<td>1</td>
+	<td>2</td>
+	<td>3</td>
+</tr>
+<tr>
+	<td width="500" align="center">
+<div id="picshow">
+	<img id="bpic" onload="loaddone(tempo)"/>
+	<div id="loading">
+		<img src="images/loading.gif" border="0"/> Loading
+		<div class="text">Please wait...<br><br><br></div>
+	</div>
+</div>
+	</td>
+	<td>
+<div class="picbox" show="show"><!--设置show显示默认图片-->
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2.jpg" src="1.jpg" onmousemove="move(event,this,0)" dLeft="550" dTop="300" title="设置标签属性show='show'显示默认图片,设置dLeft,dTop定义默认偏移量"/><!--src:小图,lowsrc:大图,showW/showH:可设置预览窗大小-->
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2.jpg" src="1.jpg" onmousemove="move(event,this,0)" showW="200" showH="200" title="通过设置标签属性showW,showH实现自定义预览图大小"/>
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2" src="1.jpg" width="320" onmousemove="move(event,this,0)" title="小图可以按比例放大"/><!--这里可以重新设置小图大小,尽量与大图比例保持一致-->
+</div>
+	</td>
+	<td>In table
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2.jpg" src="1" width="60" onmousemove="move(event,this,0)" title="也可以按比例缩小"/>
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2.jpg" src="1" onmousemove="move(event,this,0)" showW="500" showH="200" title="可以嵌套在table中"/>
+</div>
+	</td>
+</tr>
+</table>
+Out of table
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2" src="1" onmousemove="move(event,this,0)" title="放在table外面也没有问题"/>
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2" src="1" onmousemove="move(event,this,0)" showW="1000" showH="1000" title="showW='1000' showH='1000',如果指定预览图比原图大,则使用原图大小" />
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2" src="1" onmousemove="move(event,this,0)" showW="160" showH="320" title="代码较上一版本健壮,能在IE,FF下稳定工作,基本支持OP,欢迎大家帮助测试!"/>
+</div>
+<div class="picbox">
+	<div class="view" onmousemove="if (!isIE) move(event,this,1)"></div>
+	<img class="spic" lowsrc="2" src="1" onmousemove="move(event,this,0)" width="500" height="112" title="即使没有按比例拉伸,也可以正常工作"/>
+</div>
+</body>
+</html>
+
+
+

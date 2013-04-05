@@ -1,0 +1,68 @@
+<script language="Javascript">
+<!--
+var smallX = 150; //缩略图宽度
+var bigX = 600; //预览窗大小,可以任意设置
+var bigY = 450;
+var srcX = -1; //原图大小,可以任意设置. 如有一个为-1将使用图片原始大小
+var srcY = -1;
+var border = 5; //边框
+var smallY,viewX,viewY,bl,isIE,vX,vY;
+window.onload=function (){  //初始化数据
+head.innerHTML="图片已载入";
+isIE=window.event?1:0; //由于IE和FF对盒模型解释的差异,获取浏览器标记以便修正差异
+if (srcX==-1 || srcY==-1){srcX=bigpic.width;srcY=bigpic.height;} // 如果有一个为-1,则使用原图大小
+else{bigpic.width=srcX;bigpic.height=srcY;}
+smallY=srcY*smallX/srcX; //按比例计算出缩略图的高
+viewX=bigX/srcX*smallX; //计算缩略图的预览窗口大小
+viewY=bigY/srcY*smallY;
+bl=srcX/smallX; //得到缩放比例
+smallpic.width=smallX; //初始化实例属性
+smallpic.height=smallY;
+smallbox.style.borderWidth=border;
+smallbox.style.width=smallpic.offsetWidth+border*2*isIE; //(+border*2*isIE),如果是IE就加上2倍边框以修正模型差异,FF无变化
+smallbox.style.height=smallpic.offsetHeight+border*2*isIE; //以下的isIE同理,修正ie盒模型bug
+bigbox.style.borderWidth=border;
+bigbox.style.width=bigX+border*2*isIE;
+bigbox.style.height=bigY+border*2*isIE;
+view.style.left=smallbox.offsetLeft + border;
+view.style.top=smallbox.offsetTop + border;
+view.style.width=viewX- !isIE*3+1;
+view.style.height=viewY- !isIE*3+1;
+}
+function move(e){
+var e = window.event?window.event:e; //得到IE或FF的event
+if (!isIE){vX=e.pageX-border-smallbox.offsetLeft; //分别在FF与IE下获得相对坐标
+vY=e.pageY-border-smallbox.offsetTop}
+else{vX=e.offsetX;vY=e.offsetY}
+vX+=-viewX/2; //得到缩略图的预览窗位置
+vY+=-viewY/2;
+if (vX < 0) vX = 0; //边界判断,不能超出缩略图的范围
+if (vY < 0) vY = 0;
+if (vX > smallX - viewX) vX = smallX - viewX;
+if (vY > smallY - viewY) vY = smallY - viewY;
+bigpico.style.marginLeft = - vX * bl; //刷新预览窗口
+bigpico.style.marginTop = - vY * bl;
+view.style.left = vX + smallbox.offsetLeft + border; //刷新缩略图中预览窗口
+view.style.top = vY + smallbox.offsetTop + border;
+}
+//-->
+</script>
+<style type="text/css">
+<!--
+*{padding:0;margin:0}
+body{background:black}
+img{display:block;}
+#smallbox{border:1px green solid;float:left;width:0;height:0;overflow:hidden;font-size:0px}
+#bigbox{border:1px green solid;width:0px;height:0px;float:left;overflow:hidden;font-size:0px}
+#view{border:1px silver solid;width:0px;height:0px;position:absolute;font-size:0px}
+#head{text-align:center;line-height:40px;font:bold 16px/40px;color:lime}
+//-->
+</style>
+<div id="head">图片loading...</div>
+<div id="smallbox"><!--缩略图窗口//-->
+<img id="smallpic" src="1.jpg" border="0" onmousemove="move(event)">
+</div>
+<div id="bigbox"><!--预览窗口//--><div id="bigpico"><!--大图片容器//-->
+<img id="bigpic" src="2.jpg" border="0">
+</div></div>
+<div id="view" onmousemove="if (!isIE) move(event)"></div><!--缩略图上的预览窗//-->

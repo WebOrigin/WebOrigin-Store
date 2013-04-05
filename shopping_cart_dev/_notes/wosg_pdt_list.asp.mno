@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<info>
+	<infoitem key="UD_Recordset_PDT" value="name:ID;datatype:3,name:Product_Name;datatype:202,name:Picture_URL;datatype:202,name:Description;datatype:202,name:Price;datatype:6,name:Category;datatype:3" />
+</info>

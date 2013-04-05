@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<info>
+	<infoitem key="UD_Recordset_PM" value="name:ID;datatype:Long,name:cus_Name;datatype:VarChar,name:cus_Address;datatype:VarChar,name:cue_Email;datatype:VarChar,name:cus_Phone;datatype:VarChar,name:Details;datatype:VarChar,name:Pay_Date;datatype:VarChar,name:Pay_Status;datatype:VarChar" />
+</info>
